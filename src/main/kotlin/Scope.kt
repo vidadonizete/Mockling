@@ -33,3 +33,7 @@ data class Stub<T, R>(
 class StubManager<T>(
     val stubs: ArrayList<Stub<T, Any?>> = arrayListOf()
 )
+
+interface Verifier<T> {
+    fun <R> times(times: Int, call: T.() -> R)
+}
