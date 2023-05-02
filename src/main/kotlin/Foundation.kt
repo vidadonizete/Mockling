@@ -8,16 +8,15 @@ inline fun <reified T : Any> mock(builder: Register<T>.() -> Unit): T {
     val kClass = T::class
     val clazz = kClass.java
 
-    val stubManager = StubManager<T>()
-    RegisterImpl(stubManager).apply(builder)
+    val kotlinStubs: KotlinStubs<T> = arrayListOf()
+    RegisterImpl(kotlinStubs).apply(builder)
 
     val mockingHandler = MockingHandler()
     val invocationHandlerManager = InvocationHandlerManager(mockingHandler)
 
     val type = Proxy.newProxyInstance(clazz.classLoader, arrayOf(clazz), invocationHandlerManager) as T
-    stubManager.stubs.forEach { (call, result) ->
-        call(type)
-        mockingHandler.reportResult(result())
+    kotlinStubs.forEach { (call, returns) ->
+        mockingHandler.mock(call, returns, type)
     }
 
     invocationHandlerManager.invocationHandler = ExecutionHandler(mockingHandler.stubs)

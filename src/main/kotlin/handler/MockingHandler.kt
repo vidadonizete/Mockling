@@ -1,5 +1,8 @@
 package handler
 
+import Call
+import Default
+import Returns
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 
@@ -18,23 +21,15 @@ class MockingHandler : InvocationHandler {
     private var ongoingStub: OngoingStub? = null
     val stubs = arrayListOf<Stub>()
 
-    private val fallback = hashMapOf(
-        Int::class.java to 0,
-        Long::class.java to 0L,
-        Float::class.java to 0F,
-        Double::class.java to 0.0,
-        Boolean::class.java to false,
-        List::class.java to emptyList<Any>()
-    )
-
     override fun invoke(proxy: Any?, method: Method?, parameters: Array<out Any>?): Any? {
         ongoingStub = OngoingStub(method, parameters ?: emptyArray())
-        return fallback[method?.returnType]
+        return Default.BY_JAVA_CLASS[method?.returnType]
     }
 
-    fun <R : Any?> reportResult(result: R) {
+    fun <T, R> mock(call: Call<T, R>, returns: Returns<R>, type: T) {
+        call(type)
         ongoingStub?.apply {
-            stubs += Stub(method, parameters, result)
+            stubs += Stub(method, parameters, returns())
         }
         ongoingStub = null
     }

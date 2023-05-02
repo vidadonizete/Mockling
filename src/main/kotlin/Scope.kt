@@ -1,38 +1,35 @@
 typealias Call<T, R> = T.() -> R
-typealias Result<R> = () -> R
+typealias Returns<R> = () -> R
+typealias KotlinStubs<T> = ArrayList<KotlinStub<T, Any?>>
+
+data class KotlinStub<T, R>(
+    val call: Call<T, R>,
+    val returns: Returns<R>
+)
 
 interface Register<T> {
     fun <R> every(call: Call<T, R>): PartialStub<R>
 }
 
 class RegisterImpl<T>(
-    private val stubManager: StubManager<T>
+    private val kotlinStubs: KotlinStubs<T> = arrayListOf()
 ) : Register<T> {
-    override fun <R> every(call: Call<T, R>) =
-        PartialStubImpl(call, stubManager)
+    override fun <R> every(call: Call<T, R>): PartialStub<R> =
+        PartialStubImpl(call, kotlinStubs)
 }
 
 interface PartialStub<R> {
-    infix fun returns(result: Result<R>)
+    infix fun returns(returns: Returns<R>)
 }
 
-class PartialStubImpl<T, R>(
+internal class PartialStubImpl<T, R>(
     private val call: Call<T, R>,
-    private val stubManager: StubManager<T>,
+    private val kotlinStubs: KotlinStubs<T> = arrayListOf(),
 ) : PartialStub<R> {
-    override fun returns(result: Result<R>) {
-        stubManager.stubs.add(Stub(call, result))
+    override fun returns(returns: Returns<R>) {
+        kotlinStubs += KotlinStub(call, returns)
     }
 }
-
-data class Stub<T, R>(
-    val call: Call<T, R>,
-    val result: Result<R>
-)
-
-class StubManager<T>(
-    val stubs: ArrayList<Stub<T, Any?>> = arrayListOf()
-)
 
 interface Verifier<T> {
     fun <R> times(times: Int, call: T.() -> R)
