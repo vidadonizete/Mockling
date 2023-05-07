@@ -7,6 +7,8 @@ object Default {
         Float::class.java to Float.MIN_VALUE,
         Double::class.java to Double.MIN_VALUE,
         Boolean::class.java to false,
-        List::class.java to emptyList<Any>()
+        List::class.java to emptyList<Any>(),
+        Unit::class.java to Unit,
+        String::class.java to String
     )
 }
